@@ -132,8 +132,23 @@ div[data-testid="stForm"] h3 { font-family: 'Bricolage Grotesque', sans-serif; c
 .stApp div[data-baseweb="input"], .stApp div[data-baseweb="base-input"] {
   background: var(--ink-2) !important; border-radius: 12px !important; border-color: var(--line) !important;
 }
+.stApp div[data-testid="stNumberInputContainer"] {
+  background: var(--ink-2) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+}
 .stApp div[data-baseweb="input"]:focus-within { border-color: var(--violet) !important; box-shadow: 0 0 0 3px rgba(139,108,255,.35); }
+.stApp div[data-testid="stNumberInputContainer"]:focus-within {
+  border-color: var(--violet) !important;
+  box-shadow: 0 0 0 3px rgba(139,108,255,.35);
+}
 .stApp input { color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; font-weight: 600; font-size: 1.05rem; }
+.stApp input[data-testid="stNumberInputField"] {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: var(--mint);
+  background: transparent !important;
+}
 .stApp div[data-testid="stNumberInput"] button { background: transparent !important; color: var(--muted) !important; }
 .stApp div[data-testid="stFormSubmitButton"] button {
   width: 100%; border: 0; border-radius: 14px; padding: .8rem 1rem; color: #0d0a1f;
