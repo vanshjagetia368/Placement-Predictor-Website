@@ -226,7 +226,79 @@ div[data-testid="stForm"] h3 { font-family: 'Bricolage Grotesque', sans-serif; c
 .step b { display: block; color: var(--text); margin-bottom: .15rem; }
 .foot { margin-top: 2rem; text-align: center; color: var(--muted); font-size: .82rem; }
 
-@media (max-width: 560px) { .ring { margin: 0 auto; } .v-row { justify-content: center; } }
+@media (max-width: 560px) {
+  .block-container {
+    padding: 1rem 0.85rem 2rem;
+  }
+
+  .hero {
+    padding: 0.8rem 0 1.2rem;
+  }
+
+  .hero h1 {
+    font-size: 2.3rem;
+    line-height: 1.12;
+  }
+
+  .typer {
+    width: auto;
+    white-space: normal;
+    animation: none;
+    border-right: none;
+    font-size: 0.82rem;
+  }
+
+  div[data-testid="stForm"] {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .verdict {
+    padding: 1.2rem 1rem;
+    border-radius: 18px;
+  }
+
+  .v-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  .v-text {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .stamp {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+  }
+
+  .ring {
+    width: 125px;
+    height: 125px;
+    flex: 0 0 125px;
+    margin: 0 auto;
+  }
+
+  .ring svg {
+    width: 125px;
+    height: 125px;
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .bars .row {
+    grid-template-columns: 52px minmax(0, 1fr) 38px;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+  }
+
+  .steps {
+    grid-template-columns: 1fr;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .stApp *, .stApp *::before, .stApp *::after { animation: none !important; transition: none !important; }
   .confetti { display: none; }
@@ -284,7 +356,7 @@ def probability_chart(xs, ps, cgpa, p_now):
     </svg>""")
 
 
-def verdict_card(label, prob, cgpa, iq, tip):
+def verdict_card(label, prob, cgpa, iq, tip, run_id):
     placed = label == 1
     pct = int(round(prob * 100))
     off = 327 * (1 - prob)
@@ -298,7 +370,7 @@ def verdict_card(label, prob, cgpa, iq, tip):
                f"and an IQ of <b>{iq:.0f}</b>. That can change.")
     confetti = ""
     if placed:
-        rnd = random.Random(7)
+        rnd = random.Random(run_id)
         colors = ["#2ee6a6", "#8b6cff", "#ffc857", "#ff5d73", "#eeeaff"]
         confetti = '<div class="confetti" aria-hidden="true">' + "".join(
             f'<i style="left:{rnd.randint(2, 98)}%;background:{rnd.choice(colors)};'
@@ -311,17 +383,70 @@ def verdict_card(label, prob, cgpa, iq, tip):
                   f'({TRAIN_CGPA[0]} to {TRAIN_CGPA[1]}), so treat this with extra care</span>')
     if not (TRAIN_IQ[0] <= iq <= TRAIN_IQ[1]):
         chips += '<span class="chip warn">IQ is outside the training range</span>'
+    animation_css = f"""
+    <style>
+    @keyframes pop_{run_id} {{
+      from {{ transform: scale(.94); opacity: 0; }}
+      to {{ transform: scale(1); opacity: 1; }}
+    }}
+
+    @keyframes shake_{run_id} {{
+      20% {{ transform: translateX(-8px); }}
+      40% {{ transform: translateX(7px); }}
+      60% {{ transform: translateX(-4px); }}
+      80% {{ transform: translateX(2px); }}
+    }}
+
+    @keyframes stamp_{run_id} {{
+      from {{ transform: rotate(-18deg) scale(3); opacity: 0; }}
+      to {{ transform: rotate(-5deg) scale(1); opacity: 1; }}
+    }}
+
+    @keyframes fill_{run_id} {{
+      from {{ stroke-dashoffset: 327; }}
+      to {{ stroke-dashoffset: {off:.1f}; }}
+    }}
+
+    @keyframes count_{run_id} {{
+      from {{ --n: 0; }}
+      to {{ --n: {pct}; }}
+    }}
+
+    @keyframes fall_{run_id} {{
+      0% {{ transform: translateY(0) rotate(0); opacity: 1; }}
+      100% {{ transform: translateY(420px) rotate(560deg); opacity: 0; }}
+    }}
+    </style>
+    """
+    card_animation = f"pop_{run_id}" if placed else f"shake_{run_id}"
+    stamp_html = (
+        f'<div class="stamp" style="animation-name:stamp_{run_id}">'
+        f'{stamp}</div>'
+    )
+    confetti = confetti.replace(
+        "animation-duration:",
+        f"animation-name:fall_{run_id};animation-duration:"
+    ) if confetti else ""
+
     return h(f"""
-    <div class="verdict {cls}" role="status">{confetti}
+    {animation_css}
+    <div class="verdict {cls}" role="status"
+         style="animation-name:{card_animation}">
+      {confetti}
       <div class="v-row">
         <div class="v-text">
-          <div class="stamp">{stamp}</div>
+          {stamp_html}
           <p class="v-msg">{msg}</p>
         </div>
-        <div class="ring" aria-label="Estimated placement probability {pct} percent">
-          <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/>
-            <circle class="bar" cx="60" cy="60" r="52" style="--off:{off:.1f}"/></svg>
-          <div class="pct" style="--n:{pct}"></div>
+        <div class="ring"
+             aria-label="Estimated placement probability {pct} percent">
+          <svg viewBox="0 0 120 120">
+            <circle class="track" cx="60" cy="60" r="52"/>
+            <circle class="bar" cx="60" cy="60" r="52"
+                    style="--off:{off:.1f};animation-name:fill_{run_id}"/>
+          </svg>
+          <div class="pct"
+               style="--n:{pct};animation-name:count_{run_id}"></div>
         </div>
       </div>
       <div class="chips">{chips}</div>
@@ -391,6 +516,9 @@ if model is None or scaler is None:
 
 tab_predict, tab_about = st.tabs(["Predict", "How it works"])
 
+if "report_count" not in st.session_state:
+    st.session_state.report_count = 0
+
 with tab_predict:
     with st.form("predict_form"):
         st.subheader("Student details")
@@ -404,6 +532,9 @@ with tab_predict:
     if not submitted:
         st.markdown(waiting_card(), unsafe_allow_html=True)
     else:
+        st.session_state.report_count += 1
+        run_id = st.session_state.report_count
+
         try:
             label, prob = predict_one(model, scaler, cgpa, iq)
             xs, ps = probability_curve(model, scaler, iq)
@@ -423,7 +554,12 @@ with tab_predict:
         else:
             tip = f"Tipping point at IQ {iq:.0f}: CGPA {tip_cg:.1f}. You need about {max(tip_cg - cgpa, 0):.2f} more"
 
-        st.markdown(verdict_card(label, prob, cgpa, iq, tip), unsafe_allow_html=True)
+        st.markdown(
+            verdict_card(label, prob, cgpa, iq, tip, run_id),
+            unsafe_allow_html=True
+        )
+        if label == 1:
+            st.balloons()
         st.markdown(
             h(f"""<div class="panel chart"><h4>How the CGPA changes your odds</h4>
             <p>The curve shows the model's placement probability at IQ {iq:.0f}. The dashed line marks 50%, where the verdict flips.</p>
